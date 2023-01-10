@@ -15,8 +15,6 @@ app.post('/participants', (req, res) => {
   const reqData = req.body;
 
   const { value: participantRegistered, error } = participantSchema.validate(reqData);
-  console.log(error);
-  console.log(participantRegistered);
 
   if (error) return res.status(422).send(error.message);
 
@@ -29,6 +27,10 @@ app.post('/participants', (req, res) => {
   participants.push({ ...participantRegistered, lastStatus: Date.now() });
   res.sendStatus(201);
 
+});
+
+app.get('/participants', (req, res) => {
+  res.send(participants);
 });
 
 app.listen(PORT, () => {
