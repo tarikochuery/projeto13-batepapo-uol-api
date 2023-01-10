@@ -1,6 +1,7 @@
 import express, { json } from 'express';
 import cors from 'cors';
-import { participantSchema } from './utils/validation.js';
+import { messageSchema, participantSchema } from './utils/validation.js';
+import dayjs from 'dayjs';
 
 const app = express();
 
@@ -9,7 +10,9 @@ app.use(json());
 
 const PORT = 5000;
 
+// TODO: registrar collections no banco de dados
 const participants = [];
+const messages = [];
 
 app.post('/participants', (req, res) => {
   const reqData = req.body;
@@ -19,7 +22,7 @@ app.post('/participants', (req, res) => {
   if (error) return res.status(422).send(error.message);
 
   //TODO: Fazer busca no banco de dados
-  const isParticipantRegistered = participants.find(participant => participant.name === participantRegistered.name);
+  const isParticipantRegistered = !!participants.find(participant => participant.name === participantRegistered.name);
 
   if (isParticipantRegistered) return res.sendStatus(409);
 
@@ -30,7 +33,30 @@ app.post('/participants', (req, res) => {
 });
 
 app.get('/participants', (req, res) => {
+  //TODO: Localizar no banco de dados
   res.send(participants);
+});
+
+app.post('/messages', (req, res) => {
+  const reqData = req.body;
+  const { user } = req.headers;
+
+  const { value: sentMessage, error } = messageSchema.validate(reqData);
+
+  if (error) return res.status(422).send(error.message);
+
+  //TODO: Buscar participant no banco de dados
+  const isParticipantRegistered = !!participants.find(participant => participant.name === user);
+
+  if (!isParticipantRegistered) return res.sendStatus(422);
+
+  const time = `${dayjs().hour()}:${dayjs().minute()}:${dayjs().second()}`;
+
+  //TODO: Cadastrar no banco de dados
+  messages.push({ ...sentMessage, from: user, time });
+
+  res.sendStatus(201);
+
 });
 
 app.listen(PORT, () => {
