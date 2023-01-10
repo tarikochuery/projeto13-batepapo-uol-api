@@ -2,6 +2,8 @@ import express, { json } from 'express';
 import cors from 'cors';
 import { messageSchema, participantSchema } from './utils/validation.js';
 import { getNowTime } from './utils/getNowTime.js';
+import { validateParticipantLastStatus } from './utils/validateParticipantLastStatus.js';
+import { generateEntryServerMessage, generateLeaveServerMessage } from './utils/serverMessageGenerator.js';
 
 const app = express();
 
@@ -11,8 +13,8 @@ app.use(json());
 const PORT = 5000;
 
 // TODO: registrar collections no banco de dados
-const participants = [];
-const messages = [];
+export let participants = [];
+export const messages = [];
 
 app.post('/participants', (req, res) => {
   const reqData = req.body;
@@ -28,6 +30,9 @@ app.post('/participants', (req, res) => {
 
   //TODO: Fazer cadastro no banco de dados (nome da collection deve ser participants)
   participants.push({ ...participantRegistered, lastStatus: Date.now() });
+
+  //TODO: Adicionar mensagem de entrada na sala no array de mensagens
+
   res.sendStatus(201);
 
 });
@@ -95,6 +100,16 @@ app.post('/status', (req, res) => {
   res.sendStatus(200);
 
 });
+
+setInterval(() => {
+  participants.forEach(participant => {
+    const isParticipantExpired = validateParticipantLastStatus(participant);
+    if (isParticipantExpired) {
+      messages.push(generateLeaveServerMessage(participant.name));
+      participants = participants.filter(part => part.name !== participant.name);
+    }
+  });
+}, 15000);
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
