@@ -31,7 +31,8 @@ app.post('/participants', (req, res) => {
   //TODO: Fazer cadastro no banco de dados (nome da collection deve ser participants)
   participants.push({ ...participantRegistered, lastStatus: Date.now() });
 
-  //TODO: Adicionar mensagem de entrada na sala no array de mensagens
+  //TODO: Adicionar mensagem de entrada no banco de dados
+  messages.push(generateEntryServerMessage(participantRegistered.name));
 
   res.sendStatus(201);
 
@@ -105,8 +106,10 @@ setInterval(() => {
   participants.forEach(participant => {
     const isParticipantExpired = validateParticipantLastStatus(participant);
     if (isParticipantExpired) {
-      console.log(generateLeaveServerMessage(participant.name));
+      //TODO: adicionar mensagem no bando de dados
       messages.push(generateLeaveServerMessage(participant.name));
+
+      //TODO: remover participante no banco de dados
       participants = participants.filter(part => part.name !== participant.name);
     }
   });
