@@ -1,7 +1,7 @@
 import express, { json } from 'express';
 import cors from 'cors';
 import { messageSchema, participantSchema } from './utils/validation.js';
-import dayjs from 'dayjs';
+import { getNowTime } from './utils/getNowTime.js';
 
 const app = express();
 
@@ -50,13 +50,36 @@ app.post('/messages', (req, res) => {
 
   if (!isParticipantRegistered) return res.sendStatus(422);
 
-  const time = `${dayjs().hour()}:${dayjs().minute()}:${dayjs().second()}`;
+  const time = getNowTime();
 
   //TODO: Cadastrar no banco de dados
   messages.push({ ...sentMessage, from: user, time });
 
   res.sendStatus(201);
 
+});
+
+app.get('/messages', (req, res) => {
+  const { limit } = req.query;
+  const { user } = req.headers;
+
+  //TODO: Buscar no banco de dados
+  const filteredMessages = messages.filter(message => {
+    const isPublicMessage = message.type === 'message';
+    const isPrivateMessageToUser = message.type === 'private_message' && message.to === user;
+
+    if (isPublicMessage) return true;
+
+    if (isPrivateMessageToUser) return true;
+
+    return false;
+  });
+
+  if (limit) {
+    return res.send(filteredMessages.slice(-limit));
+  }
+
+  return res.send(filteredMessages);
 });
 
 app.listen(PORT, () => {
