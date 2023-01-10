@@ -70,7 +70,7 @@ app.get('/messages', (req, res) => {
 
   //TODO: Buscar no banco de dados
   const filteredMessages = messages.filter(message => {
-    const isPublicMessage = message.type === 'message';
+    const isPublicMessage = message.type === 'message' || message.type === 'status';
     const isPrivateMessageToUser = message.type === 'private_message' && message.to === user;
 
     if (isPublicMessage) return true;
@@ -105,6 +105,7 @@ setInterval(() => {
   participants.forEach(participant => {
     const isParticipantExpired = validateParticipantLastStatus(participant);
     if (isParticipantExpired) {
+      console.log(generateLeaveServerMessage(participant.name));
       messages.push(generateLeaveServerMessage(participant.name));
       participants = participants.filter(part => part.name !== participant.name);
     }
