@@ -82,6 +82,20 @@ app.get('/messages', (req, res) => {
   return res.send(filteredMessages);
 });
 
+app.post('/status', (req, res) => {
+  const { user } = req.headers;
+
+  // TODO: Buscar no banco de dados
+  const userRegistered = participants.find(participant => participant.name === user);
+  if (!userRegistered) return res.sendStatus(404);
+
+  //TODO: Atualizar no banco de dados
+  userRegistered.lastStatus = Date.now();
+
+  res.sendStatus(200);
+
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
