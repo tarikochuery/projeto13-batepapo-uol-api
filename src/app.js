@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { participantSchema } from './utils/validation';
+import { participantSchema } from './utils/validation.js';
 
 const app = express();
 
