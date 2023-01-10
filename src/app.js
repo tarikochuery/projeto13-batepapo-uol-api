@@ -1,10 +1,11 @@
-import express from 'express';
+import express, { json } from 'express';
 import cors from 'cors';
 import { participantSchema } from './utils/validation.js';
 
 const app = express();
 
 app.use(cors());
+app.use(json());
 
 const PORT = 5000;
 
@@ -14,8 +15,10 @@ app.post('/participants', (req, res) => {
   const reqData = req.body;
 
   const { value: participantRegistered, error } = participantSchema.validate(reqData);
+  console.log(error);
+  console.log(participantRegistered);
 
-  if (error) return res.sendStatus(422);
+  if (error) return res.status(422).send(error.message);
 
   //TODO: Fazer busca no banco de dados
   const isParticipantRegistered = participants.find(participant => participant.name === participantRegistered.name);
@@ -24,6 +27,7 @@ app.post('/participants', (req, res) => {
 
   //TODO: Fazer cadastro no banco de dados (nome da collection deve ser participants)
   participants.push({ ...participantRegistered, lastStatus: Date.now() });
+  res.sendStatus(201);
 
 });
 
