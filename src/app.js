@@ -113,6 +113,10 @@ app.post('/status', async (req, res) => {
 
 setInterval(async () => {
   const statusLimit = Date.now() - STATUS_LIMIT * SECONDS_TO_MILISECONDS_MULTIPLIER;
+  const participantsToKick = await db.collection(COLLECTIONS.participants).find({ lastStatus: { $lt: statusLimit } }).toArray();
+  participantsToKick.forEach(async participant => {
+    await db.collection(COLLECTIONS.messages).insertOne(generateLeaveServerMessage(participant.name));
+  });
   await db.collection(COLLECTIONS.participants).deleteMany({ lastStatus: { $lt: statusLimit } });
 
 }, 15000);
