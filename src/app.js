@@ -6,7 +6,7 @@ import { getNowTime } from './utils/getNowTime.js';
 import { validateParticipantLastStatus } from './utils/validateParticipantLastStatus.js';
 import { generateEntryServerMessage, generateLeaveServerMessage } from './utils/serverMessageGenerator.js';
 import { MongoClient } from 'mongodb';
-import { COLLECTIONS, MESSAGES_TYPES } from './utils/constants.js';
+import { COLLECTIONS, MESSAGES_TYPES, SECONDS_TO_MILISECONDS_MULTIPLIER, STATUS_LIMIT } from './utils/constants.js';
 
 dotenv.config();
 const app = express();
@@ -105,25 +105,17 @@ app.post('/status', async (req, res) => {
   const userRegistered = await db.collection(COLLECTIONS.participants).findOne({ name: user });
   if (!userRegistered) return res.sendStatus(404);
 
-  //TODO: Atualizar no banco de dados
   await db.collection(COLLECTIONS.participants).updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
 
   res.sendStatus(200);
 
 });
 
-// setInterval(() => {
-//   participants.forEach(participant => {
-//     const isParticipantExpired = validateParticipantLastStatus(participant);
-//     if (isParticipantExpired) {
-//       //TODO: adicionar mensagem no bando de dados
-//       messages.push(generateLeaveServerMessage(participant.name));
+setInterval(async () => {
+  const statusLimit = Date.now() - STATUS_LIMIT * SECONDS_TO_MILISECONDS_MULTIPLIER;
+  await db.collection(COLLECTIONS.participants).deleteMany({ lastStatus: { $lt: statusLimit } });
 
-//       //TODO: remover participante no banco de dados
-//       participants = participants.filter(part => part.name !== participant.name);
-//     }
-//   });
-// }, 15000);
+}, 15000);
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
