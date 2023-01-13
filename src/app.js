@@ -1,11 +1,26 @@
 import express, { json } from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import { messageSchema, participantSchema } from './utils/validation.js';
 import { getNowTime } from './utils/getNowTime.js';
 import { validateParticipantLastStatus } from './utils/validateParticipantLastStatus.js';
 import { generateEntryServerMessage, generateLeaveServerMessage } from './utils/serverMessageGenerator.js';
+import { MongoClient } from 'mongodb';
 
+dotenv.config();
 const app = express();
+
+const mongoClient = new MongoClient(process.env.MONGO_URL);
+let db;
+
+try {
+  await mongoClient.connect();
+  console.log('conectado ao banco de dados!');
+} catch (error) {
+  console.log(error.message);
+}
+
+db = mongoClient.db();
 
 app.use(cors());
 app.use(json());
