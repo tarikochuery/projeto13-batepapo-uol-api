@@ -92,6 +92,10 @@ app.get('/messages', async (req, res) => {
       {
         to: user,
         type: MESSAGES_TYPES.private
+      },
+      {
+        type: MESSAGES_TYPES.private,
+        from: user
       }
     ]
   }).toArray();
