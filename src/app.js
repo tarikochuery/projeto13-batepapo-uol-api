@@ -6,6 +6,7 @@ import { getNowTime } from './utils/getNowTime.js';
 import { validateParticipantLastStatus } from './utils/validateParticipantLastStatus.js';
 import { generateEntryServerMessage, generateLeaveServerMessage } from './utils/serverMessageGenerator.js';
 import { MongoClient } from 'mongodb';
+import { COLLECTIONS, MESSAGES_TYPES } from './utils/constants.js';
 
 dotenv.config();
 const app = express();
@@ -35,20 +36,20 @@ app.post('/participants', async (req, res) => {
 
   if (error) return res.status(422).send(error.message);
 
-  const isParticipantRegistered = !!(await db.collection('participants').findOne({ name: participantRegistered.name }));
+  const isParticipantRegistered = !!(await db.collection(COLLECTIONS.participants).findOne({ name: participantRegistered.name }));
 
   if (isParticipantRegistered) return res.sendStatus(409);
 
-  await db.collection('participants').insertOne({ ...participantRegistered, lastStatus: Date.now() });
+  await db.collection(COLLECTIONS.participants).insertOne({ ...participantRegistered, lastStatus: Date.now() });
 
-  await db.collection('messages').insertOne(generateEntryServerMessage(participantRegistered.name));
+  await db.collection(COLLECTIONS.messages).insertOne(generateEntryServerMessage(participantRegistered.name));
 
   res.sendStatus(201);
 
 });
 
 app.get('/participants', async (req, res) => {
-  const participants = await db.collection('participants').find().toArray();
+  const participants = await db.collection(COLLECTIONS.participants).find().toArray();
   res.send(participants);
 });
 
@@ -60,42 +61,43 @@ app.post('/messages', async (req, res) => {
 
   if (error) return res.status(422).send(error.message);
 
-  //TODO: Buscar participant no banco de dados
-  const isParticipantRegistered = !!(await db.collection('participants').findOne({ name: user }));
+  const isParticipantRegistered = !!(await db.collection(COLLECTIONS.participants).findOne({ name: user }));
 
   if (!isParticipantRegistered) return res.sendStatus(422);
 
   const time = getNowTime();
 
-  //TODO: Cadastrar no banco de dados
-  await db.collection('messages').insertOne({ ...sentMessage, from: user, time });
+  await db.collection(COLLECTIONS.messages).insertOne({ ...sentMessage, from: user, time });
 
   res.sendStatus(201);
 
 });
 
-// app.get('/messages', (req, res) => {
-//   const { limit } = req.query;
-//   const { user } = req.headers;
+app.get('/messages', async (req, res) => {
+  const { limit } = req.query;
+  const { user } = req.headers;
 
-//   //TODO: Buscar no banco de dados
-//   const filteredMessages = messages.filter(message => {
-//     const isPublicMessage = message.type === 'message' || message.type === 'status';
-//     const isPrivateMessageToUser = message.type === 'private_message' && message.to === user;
+  const filteredMessages = await db.collection(COLLECTIONS.messages).find({
+    $or: [
+      {
+        type: MESSAGES_TYPES.public
+      },
+      {
+        type: MESSAGES_TYPES.status
+      },
+      {
+        to: user,
+        type: MESSAGES_TYPES.private
+      }
+    ]
+  }).toArray();
 
-//     if (isPublicMessage) return true;
+  if (limit) {
+    return res.send(filteredMessages.slice(-limit));
+  }
 
-//     if (isPrivateMessageToUser) return true;
-
-//     return false;
-//   });
-
-//   if (limit) {
-//     return res.send(filteredMessages.slice(-limit));
-//   }
-
-//   return res.send(filteredMessages);
-// });
+  return res.send(filteredMessages);
+});
 
 // app.post('/status', (req, res) => {
 //   const { user } = req.headers;
