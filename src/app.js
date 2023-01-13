@@ -35,15 +35,12 @@ app.post('/participants', async (req, res) => {
 
   if (error) return res.status(422).send(error.message);
 
-  //TODO: Fazer busca no banco de dados
   const isParticipantRegistered = !!(await db.collection('participants').findOne({ name: participantRegistered.name }));
 
   if (isParticipantRegistered) return res.sendStatus(409);
 
-  //TODO: Fazer cadastro no banco de dados (nome da collection deve ser participants)
   await db.collection('participants').insertOne({ ...participantRegistered, lastStatus: Date.now() });
 
-  //TODO: Adicionar mensagem de entrada no banco de dados
   await db.collection('messages').insertOne(generateEntryServerMessage(participantRegistered.name));
 
   res.sendStatus(201);
@@ -51,8 +48,7 @@ app.post('/participants', async (req, res) => {
 });
 
 app.get('/participants', async (req, res) => {
-  //TODO: Localizar no banco de dados
-  const participants = db.collection('participants').find().toArray();
+  const participants = await db.collection('participants').find().toArray();
   res.send(participants);
 });
 
