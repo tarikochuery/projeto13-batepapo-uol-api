@@ -52,27 +52,27 @@ app.get('/participants', async (req, res) => {
   res.send(participants);
 });
 
-// app.post('/messages', (req, res) => {
-//   const reqData = req.body;
-//   const { user } = req.headers;
+app.post('/messages', async (req, res) => {
+  const reqData = req.body;
+  const { user } = req.headers;
 
-//   const { value: sentMessage, error } = messageSchema.validate(reqData);
+  const { value: sentMessage, error } = messageSchema.validate(reqData);
 
-//   if (error) return res.status(422).send(error.message);
+  if (error) return res.status(422).send(error.message);
 
-//   //TODO: Buscar participant no banco de dados
-//   const isParticipantRegistered = !!participants.find(participant => participant.name === user);
+  //TODO: Buscar participant no banco de dados
+  const isParticipantRegistered = !!(await db.collection('participants').findOne({ name: user }));
 
-//   if (!isParticipantRegistered) return res.sendStatus(422);
+  if (!isParticipantRegistered) return res.sendStatus(422);
 
-//   const time = getNowTime();
+  const time = getNowTime();
 
-//   //TODO: Cadastrar no banco de dados
-//   messages.push({ ...sentMessage, from: user, time });
+  //TODO: Cadastrar no banco de dados
+  await db.collection('messages').insertOne({ ...sentMessage, from: user, time });
 
-//   res.sendStatus(201);
+  res.sendStatus(201);
 
-// });
+});
 
 // app.get('/messages', (req, res) => {
 //   const { limit } = req.query;
