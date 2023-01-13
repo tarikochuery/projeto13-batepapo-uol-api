@@ -99,19 +99,18 @@ app.get('/messages', async (req, res) => {
   return res.send(filteredMessages);
 });
 
-// app.post('/status', (req, res) => {
-//   const { user } = req.headers;
+app.post('/status', async (req, res) => {
+  const { user } = req.headers;
 
-//   // TODO: Buscar no banco de dados
-//   const userRegistered = participants.find(participant => participant.name === user);
-//   if (!userRegistered) return res.sendStatus(404);
+  const userRegistered = await db.collection(COLLECTIONS.participants).findOne({ name: user });
+  if (!userRegistered) return res.sendStatus(404);
 
-//   //TODO: Atualizar no banco de dados
-//   userRegistered.lastStatus = Date.now();
+  //TODO: Atualizar no banco de dados
+  await db.collection(COLLECTIONS.participants).updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
 
-//   res.sendStatus(200);
+  res.sendStatus(200);
 
-// });
+});
 
 // setInterval(() => {
 //   participants.forEach(participant => {
