@@ -1,7 +1,7 @@
 import express, { json } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { messageSchema, participantSchema } from './utils/validation.js';
+import { getMessagesSchema, messageSchema, participantSchema } from './utils/validation.js';
 import { getNowTime } from './utils/getNowTime.js';
 import { validateParticipantLastStatus } from './utils/validateParticipantLastStatus.js';
 import { generateEntryServerMessage, generateLeaveServerMessage } from './utils/serverMessageGenerator.js';
@@ -77,6 +77,10 @@ app.get('/messages', async (req, res) => {
   const { limit } = req.query;
   const { user } = req.headers;
 
+  const { value: validLimit, error } = getMessagesSchema.validate(limit);
+
+  if (error) return res.status(422).send(error.message);
+
   const filteredMessages = await db.collection(COLLECTIONS.messages).find({
     $or: [
       {
@@ -92,11 +96,11 @@ app.get('/messages', async (req, res) => {
     ]
   }).toArray();
 
-  if (limit) {
-    return res.send(filteredMessages.slice(-limit));
+  if (validLimit) {
+    return res.send(filteredMessages.slice(-validLimit).reverse());
   }
 
-  return res.send(filteredMessages);
+  return res.send(filteredMessages.reverse());
 });
 
 app.post('/status', async (req, res) => {

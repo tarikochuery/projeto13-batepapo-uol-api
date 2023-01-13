@@ -14,3 +14,5 @@ export const messageSchema = Joi.object({
     .valid('message', 'private_message')
     .required()
 });
+
+export const getMessagesSchema = Joi.number().positive();
