@@ -11,7 +11,7 @@ import { COLLECTIONS, MESSAGES_TYPES, SECONDS_TO_MILISECONDS_MULTIPLIER, STATUS_
 dotenv.config();
 const app = express();
 
-const mongoClient = new MongoClient(process.env.MONGO_URL);
+const mongoClient = new MongoClient(process.env.DATABASE_URL);
 let db;
 
 try {
