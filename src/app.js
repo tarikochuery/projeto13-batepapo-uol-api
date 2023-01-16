@@ -62,9 +62,16 @@ app.post('/messages', async (req, res) => {
   const reqData = req.body;
   const { user } = req.headers;
 
-  const { value: sentMessage, error } = messageSchema.validate(reqData);
+  const { value, error } = messageSchema.validate(reqData);
 
   if (error) return res.status(422).send(error.message);
+
+  const sentMessage = {
+    ...value,
+    text: stripHtml(value.text).result
+  };
+
+  console.log(sentMessage);
 
   const isParticipantRegistered = !!(await db.collection(COLLECTIONS.participants).findOne({ name: user }));
 
