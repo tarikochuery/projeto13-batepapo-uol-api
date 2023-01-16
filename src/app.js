@@ -3,10 +3,11 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { getMessagesSchema, messageSchema, participantSchema } from './utils/validation.js';
 import { getNowTime } from './utils/getNowTime.js';
-import { validateParticipantLastStatus } from './utils/validateParticipantLastStatus.js';
 import { generateEntryServerMessage, generateLeaveServerMessage } from './utils/serverMessageGenerator.js';
 import { MongoClient } from 'mongodb';
 import { COLLECTIONS, MESSAGES_TYPES, SECONDS_TO_MILISECONDS_MULTIPLIER, STATUS_LIMIT } from './utils/constants.js';
+import { strict as assert } from 'assert';
+import { stripHtml } from 'string-strip-html';
 
 dotenv.config();
 const app = express();
@@ -32,17 +33,21 @@ app.use(json());
 app.post('/participants', async (req, res) => {
   const reqData = req.body;
 
-  const { value: participantRegistered, error } = participantSchema.validate(reqData);
+  const { value, error } = participantSchema.validate(reqData);
 
   if (error) return res.status(422).send(error.message);
 
-  const isParticipantRegistered = !!(await db.collection(COLLECTIONS.participants).findOne({ name: participantRegistered.name }));
+  const participantRegistered = stripHtml(value.name).result;
+
+  console.log(participantRegistered);
+
+  const isParticipantRegistered = !!(await db.collection(COLLECTIONS.participants).findOne({ name: participantRegistered }));
 
   if (isParticipantRegistered) return res.sendStatus(409);
 
-  await db.collection(COLLECTIONS.participants).insertOne({ ...participantRegistered, lastStatus: Date.now() });
+  await db.collection(COLLECTIONS.participants).insertOne({ name: participantRegistered, lastStatus: Date.now() });
 
-  await db.collection(COLLECTIONS.messages).insertOne(generateEntryServerMessage(participantRegistered.name));
+  await db.collection(COLLECTIONS.messages).insertOne(generateEntryServerMessage(participantRegistered));
 
   res.sendStatus(201);
 
