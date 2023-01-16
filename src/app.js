@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import { getMessagesSchema, messageSchema, participantSchema } from './utils/validation.js';
 import { getNowTime } from './utils/getNowTime.js';
 import { generateEntryServerMessage, generateLeaveServerMessage } from './utils/serverMessageGenerator.js';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import { COLLECTIONS, MESSAGES_TYPES, SECONDS_TO_MILISECONDS_MULTIPLIER, STATUS_LIMIT } from './utils/constants.js';
 import { stripHtml } from 'string-strip-html';
 
@@ -38,8 +38,6 @@ app.post('/participants', async (req, res) => {
 
   const participantRegistered = stripHtml(value.name).result.trim();
 
-  console.log(participantRegistered);
-
   const isParticipantRegistered = !!(await db.collection(COLLECTIONS.participants).findOne({ name: participantRegistered }));
 
   if (isParticipantRegistered) return res.sendStatus(409);
@@ -69,8 +67,6 @@ app.post('/messages', async (req, res) => {
     ...value,
     text: stripHtml(value.text).result.trim()
   };
-
-  console.log(sentMessage);
 
   const isParticipantRegistered = !!(await db.collection(COLLECTIONS.participants).findOne({ name: user }));
 
@@ -128,6 +124,19 @@ app.post('/status', async (req, res) => {
 
   res.sendStatus(200);
 
+});
+
+app.delete('/messages/:ID_DA_MENSAGEM', async (req, res) => {
+  const { user } = req.headers;
+  const { ID_DA_MENSAGEM } = req.params;
+  const messageToBeDeleted = await db.collection(COLLECTIONS.messages).findOne({ _id: ObjectId(ID_DA_MENSAGEM) });
+
+  console.log(messageToBeDeleted);
+
+  if (!messageToBeDeleted) return res.sendStatus(404);
+  if (messageToBeDeleted.from !== user) return res.sendStatus(401);
+
+  await db.collection(COLLECTIONS.messages).deleteOne({ _id: ObjectId(ID_DA_MENSAGEM) });
 });
 
 setInterval(async () => {
