@@ -131,12 +131,44 @@ app.delete('/messages/:ID_DA_MENSAGEM', async (req, res) => {
   const { ID_DA_MENSAGEM } = req.params;
   const messageToBeDeleted = await db.collection(COLLECTIONS.messages).findOne({ _id: ObjectId(ID_DA_MENSAGEM) });
 
-  console.log(messageToBeDeleted);
-
   if (!messageToBeDeleted) return res.sendStatus(404);
   if (messageToBeDeleted.from !== user) return res.sendStatus(401);
 
   await db.collection(COLLECTIONS.messages).deleteOne({ _id: ObjectId(ID_DA_MENSAGEM) });
+
+  res.sendStatus(200);
+});
+
+app.put('/messages/:ID_DA_MENSAGEM', async (req, res) => {
+  const { ID_DA_MENSAGEM } = req.params;
+  const { user } = req.headers;
+  const bodyData = req.body;
+
+  const messageToBeUpdated = await db.collection(COLLECTIONS.messages).findOne({ _id: ObjectId(ID_DA_MENSAGEM) });
+  if (!messageToBeUpdated) return res.sendStatus(404);
+  if (messageToBeUpdated.from !== user) return res.sendStatus(401);
+
+  const { value, error } = messageSchema.validate(bodyData);
+
+  if (error) return res.status(422).send(error.message);
+
+  const newMessage = {
+    ...value,
+    text: stripHtml(value.text).result
+  };
+
+  await db.collection(COLLECTIONS.messages).updateOne({
+    _id: ObjectId(ID_DA_MENSAGEM)
+  },
+    {
+      $set:
+      {
+        ...newMessage
+      }
+    });
+
+  res.sendStatus(200);
+
 });
 
 setInterval(async () => {
